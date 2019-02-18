@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ftsanjuan/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run ftsanjuan/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t ftsanjuan/multi-client ./client
+  - docker build -t ftsanjuan/multi-nginx ./nginx
+  - docker build -t ftsanjuan/multi-server ./server
+  - docker build -t ftsanjuan/multi-worker ./worker
+  # Log into the docker CI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take built images and push them to Docker Hub
+  - docker push ftsanjuan/multi-client
+  - docker push ftsanjuan/multi-nginx
+  - docker push ftsanjuan/multi-server
+  - docker push ftsanjuan/multi-worker
